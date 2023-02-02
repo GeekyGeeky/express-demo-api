@@ -15,14 +15,16 @@ const AuthGuard = (req, res, next) => {
     return res.json(errorMessage("Unauthorized access"));
   }
   let token =
-   authorization &&authorization.startsWith("Bearer") && authorization.split(" ")[1];
+    authorization &&
+    authorization.startsWith("Bearer") &&
+    authorization.split(" ")[1];
   if (!token) {
     return res.status(401).json(errorMessage("Unauthorized access"));
   }
   try {
     const decoded = jsonwebtoken.verify(token, process.env.JWT);
     req.user = decoded;
-    console.log(req.user)
+    console.log(req.user);
     next();
   } catch (e) {
     return res.status(401).json(errorMessage("Unauthorized access"));
@@ -32,8 +34,10 @@ const AuthGuard = (req, res, next) => {
 router.post("/signup", async (req, res) => {
   try {
     const body = req?.body;
-    if (!body?.name || !body?.email || !body?.password) {
-      return res.json(errorMessage("Please provide email, name and password"));
+    if (!body?.name || !body?.email || !body?.password || !body?.username) {
+      return res.json(
+        errorMessage("Please provide email, username, name and password")
+      );
     }
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(body.password, salt);
@@ -105,9 +109,34 @@ router.get("/profile", AuthGuard, async (req, res) => {
     const decodedUser = req.user;
     const user = await UserSchema.findById(decodedUser.id);
     res.json({
-        error: false,
-        message: "User profile available",
-        data: user.toMap()
+      error: false,
+      message: "User profile available",
+      data: user.toMap(),
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(400).json({
+      error: true,
+      message: "Unable to fetch profile, try again",
+    });
+  }
+});
+
+router.patch("/profile", AuthGuard, async (req, res) => {
+  try {
+    const body = req.body;
+    if (!body?.name) {
+      return res.json(errorMessage("Please provide a name"));
+    }
+    const decodedUser = req.user;
+    const user = await UserSchema.findById(decodedUser.id);
+    user.name = body.name;
+    await user.save();
+
+    res.json({
+      error: false,
+      message: "User profile available",
+      data: user.toMap(),
     });
   } catch (e) {
     console.log(e);

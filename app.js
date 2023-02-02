@@ -12,7 +12,7 @@ const controllers = require('./controllers');
  * fetch profile
  */
 
-const PORT = process.env.PORT || 9000;
+const PORT = process.env.PORT || 3000;
 const app = express();
 app.use(cors())
 app.use(express.json())
